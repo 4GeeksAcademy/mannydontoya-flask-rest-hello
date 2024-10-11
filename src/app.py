@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User
+from models import db, User, Character, Planet
 #from models import Person
 
 app = Flask(__name__)
@@ -36,28 +36,97 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-@app.route('/user', methods=['GET'])
-def handle_hello():
+@app.route('/user/all', methods=['GET'])
+def get_all_users():
+    users = User.query.all()
+    all_users = list(map(lambda x: x.serialize(), users))
 
-    response_body = {
-        "msg": "Hello, this is your GET /user response "
+    return jsonify(all_users, 200)
+
+@app.route('/user/favorites', methods=['GET'])
+def get_user_favorites():
+    user_id = request.json.get("user_id")
+    if user_id is None:
+        return jsonify({"message": "Please provide user ID"}), 400
+    user = User.query.filter_by(id=user_id).first()
+    if user_id is None:
+        return jsonify({"message": "User not found"}), 404
+    user = user.serialize()
+    if user.favorite_planets is None:
+        user.favorite_planets = []
+    if user.favorite_characters is None:
+        user.favorite_characters = []    
+    favorites = {
+        "favorite_planets": user.favorite_planets,
+        "favorite_characters": user.favorite_characters
     }
+    return jsonify(favorites, 200)
 
-    return jsonify(response_body), 200
+# @app.route('/user/<int:user_id>', methods=['GET'])
+# def get_user(user_id):
+#     user = User.query.get(user_id)
+#     return jsonify(user.serialize()), 200
 
-@app.route('/user', methods=['POST'])
-def createUser():
-    username = request.json["username"]
-    password = request.json["password"]
-    user1 = User(user_name=username, password=password)
-    db.session.add(user1)
+# @app.route('/user', methods=['POST'])
+# def createUser():
+#     username = request.json["username"]
+#     password = request.json["password"]
+#     user1 = User(user_name=username, password=password)
+#     db.session.add(user1)
+#     db.session.commit()
+#     response_body = {
+#         "msg": f"Successfully created: {username}"
+#     }
+
+#     return jsonify(response_body), 200
+
+@app.route('/favorites', methods=['POST'])
+def create_fave():
+
+    if request.json["category"] == "character":
+        char = Character(
+            name=request.json["name"],
+            gender=request.json["gender"],
+            birth_year=request.json["birth_year"],
+            height=request.json["height"],
+            mass=request.json["mass"]
+        )
+        db.session.add(char)
+
+
+        fave = Favorite(
+            name=request.json["name"],
+            category=request.json["category"],
+            user_id=request.json["user_id"],
+            character_id=request.json["entity_id"]
+        ) 
+    elif request.json["category"] == "planet":
+        planet = Planet(
+            name=request.json["name"],
+            climate=request.json["climate"],
+            gravity=request.json["gravity"],
+            population=request.json["population"],
+            terrain=request.json["terrain"]
+            )
+        db.session.add
+        fave = Favorite(
+            name=request.json["name"],
+            category=request.json["category"],
+            user_id=request.json["user_id"],
+            planet_id=request.json["entity_id"]
+        ) 
+    
+    db.session.add(fave)
     db.session.commit()
+
+
+
+
     response_body = {
         "msg": f"Successfully created: {username}"
     }
 
     return jsonify(response_body), 200
-
 
 
 

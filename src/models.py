@@ -2,11 +2,25 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-    
+favorite_planets = db.Table(
+    "favorite_planets",
+    db.Column("user_id", db.ForeignKey("user.id")),
+    db.Column("planet_id", db.ForeignKey("planet.id")),
+)    
+
+favorite_characters = db.Table(
+    "favorite_characters",
+    db.Column("user_id", db.ForeignKey("user.id")),
+    db.Column("character_id", db.ForeignKey("character.id")),
+)  
+
 class User(db.Model):
+    __tablename__="user"
     id = db.Column(db.Integer, primary_key=True)
     user_name = db.Column(db.String(250), nullable=False)
     password = db.Column(db.String(250), nullable=False)
+    favorite_planets = db.relationship("Planet", secondary=favorite_planets)
+    favorite_characters = db.relationship("Character", secondary=favorite_characters)
     def __repr__(self):
         return '<User %r>' % self.user_name
 
@@ -14,11 +28,14 @@ class User(db.Model):
         return {
             "id": self.id,
             "user_name": self.user_name,
+            "favorite_planets": [planet.serialize() for planet in self.favorite_planets],
+            "favorite_characters": [character.serialize() for character in self.favorite_characters]
             # do not serialize the password, its a security breach
         }
 
 
 class Character(db.Model):
+    __tablename__="character"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), nullable=False)
     gender = db.Column(db.String(250), nullable=True)
@@ -44,6 +61,7 @@ class Character(db.Model):
         }
 
 class Planet(db.Model):
+    __tablename__="planet"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), nullable=False)
     climate = db.Column(db.String(250), nullable=True)
@@ -58,7 +76,6 @@ class Planet(db.Model):
     def serialize(self):
         return {
             "id": self.id,
-            "user_id" : self.user_id,
             "name": self.name,
             "climate" : self.climate,
             "population" : self.population,
@@ -71,28 +88,6 @@ class Planet(db.Model):
 
 
 
-class Favorite(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(250), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey(User.id))
-    user = db.relationship(User)
-    character_id = db.Column(db.Integer, db.ForeignKey(Character.id))
-    character = db.relationship(Character)
-    planet_id = db.Column(db.Integer, db.ForeignKey(Planet.id))
-    planet = db.relationship(Planet)
-    def __repr__(self):
-        return '<Favorite %r>' % self.name
-
-    def serialize(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "user_id": self.user_id,
-            "character_id": self.character_id,
-            "planet_id": self.planet_id,
-            "user": self.user,
-            "character": self.character,
-            "planet": self.planet
-        }
+ 
 
 
