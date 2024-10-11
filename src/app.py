@@ -49,18 +49,14 @@ def get_user_favorites():
     if user_id is None:
         return jsonify({"message": "Please provide user ID"}), 400
     user = User.query.filter_by(id=user_id).first()
-    if user_id is None:
+    if user is None:
         return jsonify({"message": "User not found"}), 404
-    user = user.serialize()
-    if user.favorite_planets is None:
-        user.favorite_planets = []
-    if user.favorite_characters is None:
-        user.favorite_characters = []    
+    user_data = user.serialize()
     favorites = {
-        "favorite_planets": user.favorite_planets,
-        "favorite_characters": user.favorite_characters
+        "favorite_planets": user_data.get("favorite_planets", []),
+        "favorite_characters": user_data.get("favorite_characters", [])
     }
-    return jsonify(favorites, 200)
+    return jsonify(favorites), 200
 
 # @app.route('/user/<int:user_id>', methods=['GET'])
 # def get_user(user_id):
