@@ -125,7 +125,93 @@ def create_fave():
     return jsonify(response_body), 200
 
 
+@app.route('/characters', methods=['GET'])
+def get_all_characters():
+    characters = Character.query.all()
+    return jsonify([character.serialize() for character in characters]), 200
 
+@app.route('/characters/<int:character_id>', methods=['GET'])
+def get_character(character_id):
+    character = Character.query.get(character_id)
+    if character is None:
+        return jsonify({"message": "Character not found"}), 404
+    return jsonify(character.serialize()), 200
+
+@app.route('/planets', methods=['GET'])
+def get_all_planets():
+    planets = Planet.query.all()
+    return jsonify([planet.serialize() for planet in planets]), 200
+
+@app.route('/planets/<int:planet_id>', methods=['GET'])
+def get_planet(planet_id):
+    planet = Planet.query.get(planet_id)
+    if planet is None:
+        return jsonify({"message": "Planet not found"}), 404
+    return jsonify(planet.serialize()), 200
+
+@app.route('/favorite/planet/<int:planet_id>', methods=['POST'])
+def add_favorite_planet(planet_id):
+    user_id = request.json.get("user_id")
+    if user_id is None:
+        return jsonify({"message": "Please provide user ID"}), 400
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({"message": "User not found"}), 404
+    planet = Planet.query.get(planet_id)
+    if planet is None:
+        return jsonify({"message": "Planet not found"}), 404
+    user.favorite_planets.append(planet)
+    db.session.commit()
+    return jsonify({"message": "Favorite planet added"}), 201
+
+@app.route('/favorite/character/<int:character_id>', methods=['POST'])
+def add_favorite_character(character_id):
+    user_id = request.json.get("user_id")
+    if user_id is None:
+        return jsonify({"message": "Please provide user ID"}), 400
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({"message": "User not found"}), 404
+    character = Character.query.get(character_id)
+    if character is None:
+        return jsonify({"message": "Character not found"}), 404
+    user.favorite_characters.append(character)
+    db.session.commit()
+    return jsonify({"message": "Favorite character added"}), 201
+
+@app.route('/favorite/planet/<int:planet_id>', methods=['DELETE'])
+def delete_favorite_planet(planet_id):
+    user_id = request.json.get("user_id")
+    if user_id is None:
+        return jsonify({"message": "Please provide user ID"}), 400
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({"message": "User not found"}), 404
+    planet = Planet.query.get(planet_id)
+    if planet is None:
+        return jsonify({"message": "Planet not found"}), 404
+    if planet in user.favorite_planets:
+        user.favorite_planets.remove(planet)
+        db.session.commit()
+        return jsonify({"message": "Favorite planet removed"}), 200
+    return jsonify({"message": "Planet is not in favorites"}), 404
+
+@app.route('/favorite/character/<int:character_id>', methods=['DELETE'])
+def delete_favorite_character(character_id):
+    user_id = request.json.get("user_id")
+    if user_id is None:
+        return jsonify({"message": "Please provide user ID"}), 400
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({"message": "User not found"}), 404
+    character = Character.query.get(character_id)
+    if character is None:
+        return jsonify({"message": "Character not found"}), 404
+    if character in user.favorite_characters:
+        user.favorite_characters.remove(character)
+        db.session.commit()
+        return jsonify({"message": "Favorite character removed"}), 200
+    return jsonify({"message": "Character is not in favorites"}), 404
 
 
 
