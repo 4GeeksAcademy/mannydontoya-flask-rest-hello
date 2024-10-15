@@ -43,6 +43,8 @@ def get_all_users():
 
     return jsonify(all_users, 200)
 
+
+
 @app.route('/user/favorites', methods=['GET'])
 def get_user_favorites():
     user_id = request.json.get("user_id")
@@ -76,53 +78,6 @@ def get_user_favorites():
 
 #     return jsonify(response_body), 200
 
-@app.route('/favorites', methods=['POST'])
-def create_fave():
-
-    if request.json["category"] == "character":
-        char = Character(
-            name=request.json["name"],
-            gender=request.json["gender"],
-            birth_year=request.json["birth_year"],
-            height=request.json["height"],
-            mass=request.json["mass"]
-        )
-        db.session.add(char)
-
-
-        fave = Favorite(
-            name=request.json["name"],
-            category=request.json["category"],
-            user_id=request.json["user_id"],
-            character_id=request.json["entity_id"]
-        ) 
-    elif request.json["category"] == "planet":
-        planet = Planet(
-            name=request.json["name"],
-            climate=request.json["climate"],
-            gravity=request.json["gravity"],
-            population=request.json["population"],
-            terrain=request.json["terrain"]
-            )
-        db.session.add
-        fave = Favorite(
-            name=request.json["name"],
-            category=request.json["category"],
-            user_id=request.json["user_id"],
-            planet_id=request.json["entity_id"]
-        ) 
-    
-    db.session.add(fave)
-    db.session.commit()
-
-
-
-
-    response_body = {
-        "msg": f"Successfully created: {username}"
-    }
-
-    return jsonify(response_body), 200
 
 
 @app.route('/characters', methods=['GET'])
@@ -160,6 +115,8 @@ def add_favorite_planet(planet_id):
     planet = Planet.query.get(planet_id)
     if planet is None:
         return jsonify({"message": "Planet not found"}), 404
+    if planet in user.favorite_planets: 
+        return jsonify({"message": "Planet already in favorites"}), 409
     user.favorite_planets.append(planet)
     db.session.commit()
     return jsonify({"message": "Favorite planet added"}), 201
@@ -175,6 +132,8 @@ def add_favorite_character(character_id):
     character = Character.query.get(character_id)
     if character is None:
         return jsonify({"message": "Character not found"}), 404
+    if character in user.favorite_characters: 
+        return jsonify({"message": "Character already in favorites"}), 409
     user.favorite_characters.append(character)
     db.session.commit()
     return jsonify({"message": "Favorite character added"}), 201
